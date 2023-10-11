@@ -2,6 +2,7 @@ package bart.scoreboard.service
 
 import bart.scoreboard.ScoreBoardService
 import bart.scoreboard.service.model.Game
+import bart.scoreboard.service.model.GameRemoval
 import bart.scoreboard.service.model.ScoreUpdate
 import spock.lang.Shared
 import spock.lang.Specification
@@ -169,6 +170,24 @@ class ScoreBoardServiceSpec extends Specification {
         actualSummary == expectedSummary
     }
 
+    def "Should throw an exception when updating a non-existing game"() {
+        given:
+        def games = List.of(
+                new Game("France", 2, "Italy", 3, LocalDate.of(2023, 10, 9).toDate()),
+                new Game("Greece", 1, "England", 1, LocalDate.of(2023, 10, 10).toDate()),
+                new Game("South Korea", 1, "Germany", 1, LocalDate.of(2023, 10, 8).toDate()),
+        )
+        def update = new ScoreUpdate("Poland", 1, "Spain", 1)
+
+        when:
+        games.forEach(scoreBoardService::startGame)
+        scoreBoardService.updateScore(update)
+
+        then:
+        def ex = thrown(RuntimeException.class)
+        ex.message == "Game between homeTeam:'Poland', awayTeam:'Spain' is not on the board."
+    }
+
     def "Should update score multiple times"() {
         given:
         def games = List.of(
@@ -210,5 +229,55 @@ class ScoreBoardServiceSpec extends Specification {
 
         then:
         actualSummary == expectedSummary
+    }
+
+    def "Should remove a game"() {
+        given:
+        def games = List.of(
+                new Game("France", 2, "Italy", 3, LocalDate.of(2023, 10, 9).toDate()),
+                new Game("Greece", 1, "England", 1, LocalDate.of(2023, 10, 10).toDate()),
+                new Game("South Korea", 1, "Germany", 1, LocalDate.of(2023, 10, 8).toDate()),
+                new Game("Poland", 1, "Spain", 0, LocalDate.of(2023, 10, 9).toDate()),
+                new Game("Ireland", 0, "Ukraine", 0, LocalDate.of(2023, 10, 9).toDate()),
+                new Game("Belgium", 2, "Turkey", 2, LocalDate.of(2023, 10, 10).toDate()),
+                new Game("South Africa", 2, "Japan", 2, LocalDate.of(2023, 10, 9).toDate()),
+                new Game("Finland", 2, "New Zealand", 3, LocalDate.of(2023, 10, 8).toDate()),
+        )
+        def expectedSummary = List.of(
+                new Game("France", 2, "Italy", 3, LocalDate.of(2023, 10, 9).toDate()),
+                new Game("South Africa", 2, "Japan", 2, LocalDate.of(2023, 10, 9).toDate()),
+                new Game("Belgium", 2, "Turkey", 2, LocalDate.of(2023, 10, 10).toDate()),
+                new Game("South Korea", 1, "Germany", 1, LocalDate.of(2023, 10, 8).toDate()),
+                new Game("Greece", 1, "England", 1, LocalDate.of(2023, 10, 10).toDate()),
+                new Game("Poland", 1, "Spain", 0, LocalDate.of(2023, 10, 9).toDate()),
+                new Game("Ireland", 0, "Ukraine", 0, LocalDate.of(2023, 10, 9).toDate()),
+        )
+        def gameRemoval = new GameRemoval("Finland", "New Zealand")
+
+        when:
+        games.forEach(scoreBoardService::startGame)
+        scoreBoardService.finishGame(gameRemoval)
+        def actualSummary = scoreBoardService.summary
+
+        then:
+        actualSummary == expectedSummary
+    }
+
+    def "Should throw an exception when finishing a non-existing game"() {
+        given:
+        def games = List.of(
+                new Game("France", 2, "Italy", 3, LocalDate.of(2023, 10, 9).toDate()),
+                new Game("Greece", 1, "England", 1, LocalDate.of(2023, 10, 10).toDate()),
+                new Game("South Korea", 1, "Germany", 1, LocalDate.of(2023, 10, 8).toDate()),
+        )
+        def gameRemoval = new GameRemoval("Poland", "Spain")
+
+        when:
+        games.forEach(scoreBoardService::startGame)
+        scoreBoardService.finishGame(gameRemoval)
+
+        then:
+        def ex = thrown(RuntimeException.class)
+        ex.message == "Game between homeTeam:'Poland', awayTeam:'Spain' is not on the board."
     }
 }

@@ -1,6 +1,7 @@
 package bart.scoreboard
 
 import bart.scoreboard.service.model.Game
+import bart.scoreboard.service.model.GameRemoval
 import bart.scoreboard.service.model.ScoreUpdate
 import java.lang.RuntimeException
 
@@ -21,6 +22,9 @@ class ScoreBoardService(private var games: Array<Game?>,
         fun generateGameKey(update: ScoreUpdate) = "${update.homeTeam} ${update.awayTeam}".uppercase()
 
         @JvmStatic
+        fun generateGameKey(gameRemoval: GameRemoval) = "${gameRemoval.homeTeam} ${gameRemoval.awayTeam}".uppercase()
+
+        @JvmStatic
         fun moveGamesDown(spaceIndex: Int, games: Array<Game?>, gameCount: Int) {
             if (games.size == gameCount) throw RuntimeException("Games array is full.")
             if (spaceIndex < 0 || games.size <= spaceIndex) throw RuntimeException("Index ${spaceIndex} is out of range of a board with ${gameCount} elements.")
@@ -35,10 +39,10 @@ class ScoreBoardService(private var games: Array<Game?>,
         fun moveGamesUp(spaceIndex: Int, games: Array<Game?>, gameCount: Int) {
             if (games.size == gameCount) throw RuntimeException("Games array is full.")
 
-            for (index in gameCount  downTo  spaceIndex + 1) {
-                games[index] = games[index - 1]
+            for (index in spaceIndex until gameCount - 1) {
+                games[index] = games[index + 1]
             }
-            games[spaceIndex] = null
+            games[gameCount - 1] = null
         }
 
         private fun findIndexForArgument(argument: Game, games: Array<Game?>, begin: Int, end: Int): Int {
@@ -109,6 +113,18 @@ class ScoreBoardService(private var games: Array<Game?>,
         }
         games[destinationIndex] = updatedGame
         buildIndex(destinationIndex, sourceIndex + 1)
+        cacheGames()
+    }
+
+    @Synchronized
+    override fun finishGame(gameRemoval: GameRemoval) {
+        val sourceIndex = gameIndex.getOrDefault(generateGameKey(gameRemoval), -1)
+
+        if (sourceIndex == -1) throw RuntimeException("Game between homeTeam:'${gameRemoval.homeTeam}', awayTeam:'${gameRemoval.awayTeam}' is not on the board.")
+
+        moveGamesUp(sourceIndex, games, gameCount)
+        gameCount--
+        buildIndex(sourceIndex, gameCount)
         cacheGames()
     }
 
