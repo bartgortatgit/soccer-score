@@ -1,5 +1,6 @@
 package bart.scoreboard.service.model
 
+import bart.scoreboard.ScoreBoardService
 import spock.lang.Specification
 
 import java.time.LocalDate
@@ -68,5 +69,31 @@ class GameSpec extends Specification {
         homeTeam | awayTeam
         "Italy"  | "England"
         "France" | "Portugal"
+    }
+
+    def "Should generate a game key from a game."() {
+        when:
+        def actualGameKey = ScoreBoardService.generateGameKey(game)
+
+        then:
+        actualGameKey == expectedGameKey
+
+        where:
+        game                          | expectedGameKey
+        new Game("Romania", "France") | "ROMANIA FRANCE"
+        new Game("Chile", "Canada")   | "CHILE CANADA"
+    }
+
+    def "Should generate a game key from a score update."() {
+        when:
+        def actualGameKey = ScoreBoardService.generateGameKey(scoreUpdate)
+
+        then:
+        actualGameKey == expectedGameKey
+
+        where:
+        scoreUpdate                                | expectedGameKey
+        new ScoreUpdate("Romania", 1, "France", 2) | "ROMANIA FRANCE"
+        new ScoreUpdate("Chile", 0, "Canada", 1)   | "CHILE CANADA"
     }
 }

@@ -35,6 +35,8 @@ class Game {
 
     constructor(homeTeam: String, awayTeam: String) : this(homeTeam, 0, awayTeam, 0, Date())
 
+    constructor(oldGame: Game, homeScore: Int, awayScore: Int) : this(oldGame.homeTeam, homeScore, oldGame.awayTeam, awayScore, oldGame.createdTime)
+
     override fun equals(other: Any?): Boolean {
         if (other is Game) {
             val compared : Game = other
@@ -53,6 +55,6 @@ class Game {
     }
 
     override fun toString(): String {
-        return "$(homeTeam:'${homeTeam}', homeScore:${homeScore}, awayTeam:'${awayTeam}', awayScore:${awayScore}, createdTime:${createdTime}, totalScore:${totalScore})"
+        return "(homeTeam:'${homeTeam}', homeScore:${homeScore}, awayTeam:'${awayTeam}', awayScore:${awayScore}, createdTime:${createdTime}, totalScore:${totalScore})"
     }
 }
